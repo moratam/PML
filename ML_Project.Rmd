@@ -1,0 +1,105 @@
+# Practical Machine Learning Project
+### By Amit Morathkar
+
+
+### Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement - a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
+### Data Source
+The training data for this project are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this project come from this source: http://groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+### Submission
+
+The goal of your project is to predict the manner in which they did the exercise. This is the "classe" variable in the training set. You may use any of the other variables to predict with. You should create a report describing how you built your model, how you used cross validation, what you think the expected out of sample error is, and why you made the choices you did. You will also use your prediction model to predict 20 different test cases.
+
+### Reproducibility
+
+Due to security concerns with the exchange of R code, your code will not be run during the evaluation by your classmates. Please be sure that if they download the repo, they will be able to view the compiled HTML version of your analysis.
+
+### Analysis
+
+### Laod Required Packages
+```{r}
+library(lattice)
+library(ggplot2)
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(rattle)
+library(randomForest)
+
+
+```
+
+
+### Load Data and Clean up data
+```{r}
+trainingset <- read.csv("pml-training.csv", na.strings=c("NA","#DIV/0!", ""))
+testingset <- read.csv("pml-testing.csv", na.strings=c("NA","#DIV/0!", ""))
+trainingset<-trainingset[,colSums(is.na(trainingset)) == 0]
+testingset <-testingset[,colSums(is.na(testingset)) == 0]
+# Delete variables which are not required
+trainingset   <-trainingset[,-c(1:7)]
+testingset <-testingset[,-c(1:7)]
+# partition the data so that 75% of the training dataset into training and the remaining 25% to testing
+traintrainset <- createDataPartition(y=trainingset$classe, p=0.75, list=FALSE)
+TrainTrainingSet <- trainingset[traintrainset, ] 
+TestTrainingSet <- trainingset[-traintrainset, ]
+
+# Plot the graph for Variable "classe"
+
+plot(TrainTrainingSet$classe, col="blue", main="Plot of levels of variable classe within the TrainTrainingSet data set", xlab="classe", ylab="Frequency")
+```
+
+### Prediction- Model#1 Decsion Tree
+```{r}
+set.seed(12345)
+model1 <- rpart(classe ~ ., data=TrainTrainingSet, method="class")
+
+prediction1 <- predict(model1, TestTrainingSet, type = "class")
+
+DecTree <- rpart(classe ~ ., data=TrainTrainingSet, method="class")
+fancyRpartPlot(DecTree)
+```
+
+```{r}
+# Test results
+confusionMatrix(prediction1, TestTrainingSet$classe)
+```
+
+
+### Prediction model 2: Random Forest
+
+```{r}
+model2 <- randomForest(classe ~. , data=TrainTrainingSet, method="class")
+
+# Predicting:
+prediction2 <- predict(model2, TestTrainingSet, type = "class")
+
+# Test results on TestTrainingSet data set:
+confusionMatrix(prediction2, TestTrainingSet$classe)
+```
+
+
+### Final Model Selection
+
+The accuracy of Random Forest model was 0.995 as compared to Decsion Tree model witn 0.739
+Hence Random Forest model is choosen
+
+### Results
+```{r}
+# predict outcome levels on the original Testing data set using Random Forest algorithm
+predictfinal <- predict(model2, testingset, type="class")
+predictfinal
+
+```
+
+
